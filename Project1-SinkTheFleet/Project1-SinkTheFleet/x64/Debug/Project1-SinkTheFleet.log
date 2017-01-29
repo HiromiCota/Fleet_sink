@@ -1,0 +1,10 @@
+﻿  TextGraphics.cpp
+  SinkTheFleet.cpp
+  safeio.cpp
+  fleet.cpp
+d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\fleet.cpp(218): warning C4154: deletion of an array expression; conversion to pointer supplied
+  battle.cpp
+d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\battle.cpp(17): error C3861: 'getCoords': identifier not found
+  Generating Code...
+d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\fleet.cpp(1285): error C4716: 'inputShipType': must return a value
+d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\fleet.cpp(1289): error C4716: 'fGetName': must return a value
