@@ -35,6 +35,7 @@ const short BOXWIDTH = 79;	// maximum screen line length
 
 
 const int SHIP_SIZE_ARRAYSIZE = 6; // size of the shipSize array
+const int NUMBER_OF_SHIPS = 5; //Number of ships each player gets
 const short shipSize[SHIP_SIZE_ARRAYSIZE] = {0, 2, 3, 3, 4, 5}; 
 	// number of elements for each ship
 
@@ -169,8 +170,7 @@ string getFileName(string fileName);
 
 //Converts error message from getGrid() to user-readable error
 void errorDecoder(int code);
-	
-// ...
+
 //----------------------------------------------------------------------------
 // other function prototypes
 //----------------------------------------------------------------------------

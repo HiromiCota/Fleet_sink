@@ -131,25 +131,27 @@ void allocMem(Player players[], char size)
 			players[i].m_gameGrid[1] = nullptr; //My attacks
 			players[i].m_gameGrid[0] = new Ship*[numberOfRows];
 			players[i].m_gameGrid[1] = new Ship*[numberOfRows];
-			for(short j = 0; j < numberOfRows; ++j) //Second: Build pointers for the rows
-			{
-			//-------------------------------------------------
-			//	your code goes here ...
+
+			for(short j = 0; j < numberOfRows; j++) //Second: Build pointers for the rows
+			{			
 			// set the pointers to NULL, then allocate the
 			// memory for each row in each grid				
 				players[i].m_gameGrid[0][j] = nullptr;
 				players[i].m_gameGrid[1][j] = nullptr;
 				players[i].m_gameGrid[0][j] = new Ship[numberOfCols];
 				players[i].m_gameGrid[1][j] = new Ship[numberOfCols];
-
-			//--------------------------------------------------
-				for(short k = 0; k < numberOfCols; ++k) //Third: Fill values into each column in each row
-				{
-					players[i].m_gameGrid[0][j][k] = NOSHIP;
-					players[i].m_gameGrid[1][j][k] = NOSHIP;
-				} // end for k
 			} // end for j
 		} // end for i
+		for (short i = 0; i < numberOfRows; i++)
+		{
+			for (short k = 0; k < numberOfCols; k++) //Third: Fill values into each column in each row
+			{				
+				players[i].m_gameGrid[0][i][k] = NOSHIP;
+				players[i].m_gameGrid[1][i][k] = NOSHIP;
+			} // end for k
+		}
+			
+
 	}
 	catch(bad_alloc e)
 	{
