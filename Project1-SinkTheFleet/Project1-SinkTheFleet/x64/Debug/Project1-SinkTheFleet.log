@@ -4,8 +4,5 @@
   fleet.cpp
   battle.cpp
   Generating Code...
-fleet.obj : error LNK2005: "class orientException bad_orient" (?bad_orient@@3VorientException@@A) already defined in battle.obj
-fleet.obj : error LNK2005: "class ptrException bad_player_pointer" (?bad_player_pointer@@3VptrException@@A) already defined in battle.obj
-SinkTheFleet.obj : error LNK2005: "class orientException bad_orient" (?bad_orient@@3VorientException@@A) already defined in battle.obj
-SinkTheFleet.obj : error LNK2005: "class ptrException bad_player_pointer" (?bad_player_pointer@@3VptrException@@A) already defined in battle.obj
-C:\Users\Hiromi\Source\Repos\Fleet_sink\Project1-SinkTheFleet\x64\Debug\Project1-SinkTheFleet.exe : fatal error LNK1169: one or more multiply defined symbols found
+  Project1-SinkTheFleet.vcxproj -> C:\Users\Hiromi\Source\Repos\Fleet_sink\Project1-SinkTheFleet\x64\Debug\Project1-SinkTheFleet.exe
+  Project1-SinkTheFleet.vcxproj -> C:\Users\Hiromi\Source\Repos\Fleet_sink\Project1-SinkTheFleet\x64\Debug\Project1-SinkTheFleet.pdb (Partial PDB)

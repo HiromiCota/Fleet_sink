@@ -139,9 +139,6 @@ void allocMem(Player players[], char size)
 			// memory for each row in each grid				
 				players[i].m_gameGrid[0][j] = nullptr;
 				players[i].m_gameGrid[1][j] = nullptr;
-				//for testing
-				if (j == 7)
-					throw bad_alloc();
 				players[i].m_gameGrid[0][j] = new Ship[numberOfCols];
 				players[i].m_gameGrid[1][j] = new Ship[numberOfCols];
 
@@ -156,9 +153,9 @@ void allocMem(Player players[], char size)
 	}
 	catch(bad_alloc e)
 	{
-		deleteMem(players, size);
 		cerr << "exception: " << e.what() << endl;
 		cout << "shutting down" << endl;
+		deleteMem(players, size);
 		cin.ignore(BUFFER_SIZE, '\n');
 		exit(EXIT_FAILURE);
 	}
@@ -327,14 +324,23 @@ void printGrid(ostream& sout, Ship** grid, char size)
 {
 	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
 	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
+	char rowNumberLabel = 'A';
 
+	//Draws header
 	for(short j = 1; j <= numberOfCols; ++j)
 		sout << setw(3) << j;
 	sout  << endl;
-	// your code goes here ...
-	// use printShip for each element in the grid
 
-
+	for (short i = 0; i < numberOfRows; i++)
+	{
+		//Draws a filled row
+		sout << rowNumberLabel++ ;
+		for (short j = 0; j < numberOfCols; j++)
+		{
+			printShip(sout, grid[i][j]);
+		}
+		sout << endl;		
+	}
 } 
 
 //---------------------------------------------------------------------------------
@@ -423,7 +429,7 @@ void initializePlayer(Player* playerPtr)
 //		1/18/17 HRC completed v 0.6 (Fully functional)
 //     
 //---------------------------------------------------------------------------------
-void setships(Player players[], char size, short whichPlayer)
+void setShips(Player players[], char size, short whichPlayer)
 {
 	char input = 'V';
 	char ok = 'Y';
@@ -432,7 +438,7 @@ void setships(Player players[], char size, short whichPlayer)
 	Cell location = {0, 0};
 	Ship thisShip = NOSHIP;
 	
-	for(short j = 1; j < SHIP_SIZE_ARRAYSIZE; j++)
+	for(short j = 1; j <= SHIP_SIZE_ARRAYSIZE; j++)
 	{
 		thisShip = shipNumberToName(j);
 		system("cls"); //Windows specific command. This must change if we want to support other OSes.
@@ -454,13 +460,17 @@ void setships(Player players[], char size, short whichPlayer)
 			{
 				//No collision possible. Just draw it.
 				putShip(players[whichPlayer], j);
+				system("cls");
+				printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
 			}
 			else
 			{
 				//Collision possible. Test it
-				if (noCollision(players[whichPlayer], j))
+				if (validLocation(players[whichPlayer], j))
 				{
 					putShip(players[whichPlayer], j);
+					system("cls");
+					printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
 				}
 				else
 				{
@@ -521,7 +531,7 @@ void putShip(Player& player, short shipNumber)
 {
 	//NOTE: This function does not check to see if locations are valid
 	//		Do not call this function directly without running validators
-	//		inBounds() and noCollision() first.
+	//		inBounds() and validLocation() first.
 	Ship thisShip = shipNumberToName(shipNumber);
 
 	if (player.m_ships[shipNumber].m_orientation == VERTICAL)
@@ -663,24 +673,28 @@ void saveGrid(Player players[], short whichPlayer, char size)
 	string fileName = "default.ship";
 	string prompt = "saving "; //To tell the player that we're using their input
 	// to save, not load.
+	char orient = 'H';
 	
 	//No, don't do this. Change it to be just shipNumber, bowLoc, and orient
 	//Way easier to verify that the data is a valid game state
-
-	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
-	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;	
 	
 	fileName = getFileName(prompt);
 
 	fb.open(fileName, ios::out);
 	ostream os(&fb);
 
-	for (int j = 0; j < numberOfRows; j++)
+	os << toupper(size) << endl; //size is alone on the first line
+
+	for (int i = 0; i < SHIP_SIZE_ARRAYSIZE; i++)
 	{
-		for (int i = 0; i < numberOfCols; i++)
-		{
-			os << players[whichPlayer].m_gameGrid[DEFENSE_GRID][j][i];
-		}
+		if (players[whichPlayer].m_ships[i].m_orientation == HORIZONTAL)
+			orient = 'H';
+		else
+			orient = 'V';
+
+		os << players[whichPlayer].m_ships[i].m_bowLocation.m_row << ' '
+			<< players[whichPlayer].m_ships[i].m_bowLocation.m_col << ' '
+			<< orient;
 		os << endl;
 	}	
 	fb.close();
@@ -789,39 +803,73 @@ string getFileName(string process)
 //		9/12/06 PB comleted v 0.5
 //     
 //---------------------------------------------------------------------------------
-bool getGrid(Player players[], short whichPlayer, char size, string fileName)
+int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 {
-	string line;
-	ifstream ifs;
-	Ship ship = NOSHIP;
-	short shipCount[SHIP_SIZE_ARRAYSIZE] = {0};
-	char cell = ' ';
-	char fsize = 'S';
-	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
-	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
+	
+	char size = '\0';
+	const int TOTAL_SHIPS = 7;
+	char buffer = '\0';
+	unsigned short position = 0;
+	Direction orient = HORIZONTAL;
+	ifstream shipData;	
 
 	try
 	{
-		ifs.open(fileName.c_str());
-		if(!ifs)
+		shipData.open(fileName);
+
+		if (shipData.is_open())
 		{
-			cout << "could not open file " << fileName << endl
-				<< " press <enter> to continue" << endl;
-			cin.ignore(BUFFER_SIZE, '\n');
-			return false;
+			//Start parsing.
+
+			//First line contains size
+			shipData >> size; //This should only be a character and a \n
+			size = toupper(size);
+
+			if (size != realSize)
+				return 2;//Bad size header
+			else
+			{
+				for (int i = 1; i < TOTAL_SHIPS + 1; i++)
+				{
+					shipData >> position;
+					players[whichPlayer].m_ships[i].m_bowLocation.m_row = position;
+
+					shipData >> position;
+					players[whichPlayer].m_ships[i].m_bowLocation.m_col = position;
+
+					shipData >> buffer;
+					if (buffer == 'H')
+						players[whichPlayer].m_ships[i].m_orientation = HORIZONTAL;
+					else if (buffer == 'V')
+						players[whichPlayer].m_ships[i].m_orientation = VERTICAL;
+					else
+						return 3; //Bad orientation
+
+					if (inBounds(players[whichPlayer], i, size) == false)
+						return 4; //Bad position
+
+					if (i != 1)
+					{
+						//We must check for collisions
+						if (validLocation(players[whichPlayer], i) == false)
+							return 5; //Ship collision
+					}
+				} //End import ship loop
+				shipData.close();
+			} //End open file
+		}
+		else
+		{
+			return 1; //Cannot open file
 		}
 	}
-	catch(exception e)
+	catch (exception ex)
 	{
-		cout << "could not open file " << fileName << endl
-			<< " press <enter> to continue" << endl;
-		cin.ignore(BUFFER_SIZE, '\n');
-		return false;
-	}	
-	// your code goes here ...
-	
 
-	return true;
+	}
+
+	return 0; //Nothing broke! 
+	
 }
 
 //---------------------------------------------------------------------------------
@@ -890,64 +938,61 @@ Cell getCoord(istream& sin, char size)
 
 //---------------------------------------------------------------------------------
 // Function:	validLocation()
-// Title:	Valid Location 
-// Description:
-//		Can the ship legitimately go there?
-// Programmer:
-// 
-// Date:	12/20/05
+// Title:		Valid Location?
+// Description:	Will the new ship hit anything already on the board?
+// Programmer:	Hiromi Cota
+// Date:		1/18/2017
 //
-// Version:	0.1
+// Version:	0.3
 // 
 // Environment: Hardware: i3 
 //              Software: OS: Windows 7; 
 //              Compiles under Microsoft Visual C++ 2013
 //
-// Calls:		inBounds()
+// Calls:		
 //
-// Called By:
+// Called By: validLocation()
 //
 // Parameters:	player: const Player&;	a reference to the specific Player
 //				shipNumber: short;	the number of the ship (1 - 5)
 //					in the array player.m_ships[]
-//				size: char;		'S' or 'L'
+//				
 // 
-// Returns: bool -- 	true if the ship would not go off the edge
+// Returns: bool -- 	true if the ship will not cross another ship
 //							or cross another ship;
 //						false otherwise
 //
 // History Log:
-//		12/20/05 PB completed v 0.1
-//		1/17/17 HRC	Testing in bounds seperately 
-//		1/18/17	HRC DEPRECATED! Split to noCollision() & inBounds()
+//		1/13/2017 HRC completed v 0.1 (re-wrote function to split off inBounds())
+//	    1/17/2017 HRC completed v 0.2 (optimized loops)
+//		1/18/2017 HRC completed v 0.3 (Threw old loops in trash; now fully functional)
+//		1/29/2017 HRC completed v 0.4
 //---------------------------------------------------------------------------------
-bool validLocation(const Player& player, short shipNumber, char size)
+bool validLocation(const Player& player, short shipNumber)
 {
-	//This function is deprecated.
-	//	In bounds testing was pushed to inBounds() since the first 
-	//	ship never needs to be checked for collision.
-	//	Collision testing was pushed to noCollision() because I was
-	//	on a roll and didn't notice that I obviated this function until now.
+	bool noWreck = true; //Assume true until we break it.
+	Ship thisShip = shipNumberToName(shipNumber);
 
-	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
-	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
-	bool is_valid_location = false;
-	
-	for (short i = 0; i < shipNumber - 1//Because ship numbers start at 1
-		; i++) //loop through each of ships
+	if (player.m_ships[shipNumber].m_orientation == VERTICAL)
 	{
-		if (inBounds(player, shipNumber, size) == true)
+		//Loop vertically
+		for (int i = 0; i < shipSize[shipNumber]; i++)
 		{
-			//Then check to see if ships cross
-			if (noCollision(player, shipNumber) == true)
-			{
-				is_valid_location = true;
-			}			
-		} //is_valid_location defaults to false, so there's no need for else statements.		
+			if (player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL) + i][(player, shipNumber, HORIZONTAL)] !=
+				NOSHIP)
+				noWreck = false;
+		}
 	}
-
-	// replace the return value
-	return is_valid_location;
+	else //Loop horizontally
+	{
+		for (int i = 0; i < shipSize[shipNumber]; i++)
+		{
+			if (player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL)][(player, shipNumber, HORIZONTAL + i)] !=
+				NOSHIP)
+				noWreck = false;
+		}
+	}
+	return noWreck;
 }
 
 //---------------------------------------------------------------------------------
@@ -1075,64 +1120,6 @@ bool inBounds(Cell target, char size)
 		return true;
 }
 //---------------------------------------------------------------------------------
-// Function:	noCollision()
-// Title:		No Collision?
-// Description:	Will the new ship hit anything already on the board?
-// Programmer:	Hiromi Cota
-// Date:		1/18/2017
-//
-// Version:	0.3
-// 
-// Environment: Hardware: i3 
-//              Software: OS: Windows 7; 
-//              Compiles under Microsoft Visual C++ 2013
-//
-// Calls:		
-//
-// Called By: validLocation()
-//
-// Parameters:	player: const Player&;	a reference to the specific Player
-//				shipNumber: short;	the number of the ship (1 - 5)
-//					in the array player.m_ships[]
-//				
-// 
-// Returns: bool -- 	true if the ship will not cross another ship
-//							or cross another ship;
-//						false otherwise
-//
-// History Log:
-//		1/13/2017 HRC completed v 0.1
-//	    1/17/2017 HRC completed v 0.2 (optimized loops)
-//		1/18/2017 HRC completed v 0.3 (Threw old loops in trash; now fully functional)
-//---------------------------------------------------------------------------------
-bool noCollision(const Player& player, short shipNumber)
-{	
-	bool noWreck = true; //Assume true until we break it.
-	Ship thisShip = shipNumberToName(shipNumber);
-
-	if (player.m_ships[shipNumber].m_orientation == VERTICAL)
-	{
-		//Loop vertically
-		for (int i = 0; i < shipSize[shipNumber]; i++)
-		{
-			if (player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL) + i][(player, shipNumber, HORIZONTAL)] !=
-				NOSHIP)
-				noWreck = false;
-		}
-	}
-	else //Loop horizontally
-	{
-		for (int i = 0; i < shipSize[shipNumber]; i++)
-		{
-			if (player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL)][(player, shipNumber, HORIZONTAL + i)] !=
-				NOSHIP)
-				noWreck = false;
-		}
-	}
-		
-	return noWreck;
-}
-//---------------------------------------------------------------------------------
 // Function:	bowLoc()
 // Title:		Bow Location
 // Description:
@@ -1151,7 +1138,7 @@ bool noCollision(const Player& player, short shipNumber)
 //
 // Calls:	
 //
-// Called By:	noCollision()
+// Called By:	validLocation()
 //
 // Parameters:	
 // Parameters:	
@@ -1164,7 +1151,7 @@ bool noCollision(const Player& player, short shipNumber)
 // Returns:	void
 //
 // History Log: 
-//		9/12/06 PB comleted v 1.0
+//		1/17/17	HRC completed v 1.0
 //     
 //---------------------------------------------------------------------------------
 int getBowLoc(const Player& player, short shipNumber, Direction direction)
@@ -1216,8 +1203,8 @@ void header(ostream& sout)
 {
 	const string empty;
 	const string sink("SINK THE FLEET!");
-	// your name goes here!
-	const string by("Edmonds Community College CS 132");
+	
+	const string by("Hiromi Cota @ Edmonds Community College CS 132");
 	boxTop(sout, BOXWIDTH);
 	boxLine(sout, empty, BOXWIDTH);
 	boxLine(sout, sink , BOXWIDTH, 'C');
@@ -1270,84 +1257,3 @@ void endBox(short player)
 	boxBottom(cout, BOXWIDTH);
 }
 
-ShipInfo fGetShip(string shipInfo)
-{
-	Ship thisShip = NOSHIP;
-	Cell thisCell = { 0 , 0 };
-	Direction orient = HORIZONTAL;
-	short pieces = 0;
-	ShipInfo output;	
-	
-	//Parse shipInfo
-
-	//Build a ship
-	setShipInfo(&output, thisShip, orient, thisCell.m_row, thisCell.m_col);
-	return output;
-}
-
-int fGetAllShips(string filename, Player players[], short whichPlayer)
-{
-	char size = '\0';
-	const int TOTAL_SHIPS = 7;
-	char buffer = '\0';
-	unsigned short position = 0;
-	Direction orient = HORIZONTAL;
-	ifstream shipData;
-
-	try
-	{
-		shipData.open(filename);
-
-		if (shipData.is_open())
-		{
-			//Start parsing.
-
-			//First line contains size
-			shipData >> size; //This should only be a character and a \n
-			size = toupper(size);
-
-			if (size != 'L' || size != 'S')
-				return 2;//Bad size header
-			else
-			{
-				for (int i = 1; i < TOTAL_SHIPS + 1; i++)
-				{
-					shipData >> position;
-					players[whichPlayer].m_ships[i].m_bowLocation.m_row = position;
-
-					shipData >> position;
-					players[whichPlayer].m_ships[i].m_bowLocation.m_col = position;
-
-					shipData >> buffer;
-					if (buffer == 'H')
-						players[whichPlayer].m_ships[i].m_orientation = HORIZONTAL;
-					else if (buffer == 'V')
-						players[whichPlayer].m_ships[i].m_orientation = VERTICAL;
-					else
-						return 3; //Bad orientation
-
-					if (inBounds(players[whichPlayer], i, size) == false)
-						return 4; //Bad position
-
-					if (i != 1)
-					{
-						//We must check for collisions
-						if (noCollision(players[whichPlayer], i) == false)
-							return 5; //Ship collision
-					}
-				} //End import ship loop
-				shipData.close();
-			} //End open file
-		}
-		else
-		{
-			return 1; //Cannot open file
-		}
-	}
-	catch (exception ex)
-	{
-
-	}
-
-	return 0; //Nothing broke! 
-}
