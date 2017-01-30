@@ -25,6 +25,8 @@
 void takeTheShot(Player players[], short whichPlayer, char size);
 //Safely read in target coordinates
 Cell inputTarget(char size);
+//Check if the player has already used those coordinates
+int doubleTap(Player players[], short whichPlayer, Cell target);
 //Check to see if a ship gets hit
 bool checkHit(Player players[], short whichPlayer, Cell target);
 //Mark the hit on the grids.

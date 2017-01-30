@@ -11,23 +11,46 @@ void takeTheShot(Player players[], short whichPlayer, char size)
 {
 	Cell targetLocation = { 0, 0 };
 	bool good_target = false;
+	int new_target = 12;
+	bool shotHit = false;
 	//Prompt the player for where they want to shoot.
-	while (!good_target) 
+	do
 	{
-		targetLocation = inputTarget(size);
-		
-		//This line requires and overloaded inBounds()
-		good_target = inBounds(targetLocation, size);
-	}
+		shotHit = false;
+		good_target = false;
+		new_target = 12;
+		while (!good_target)
+		{
+			targetLocation = inputTarget(size);
+
+			//This line requires an overloaded inBounds()
+			good_target = inBounds(targetLocation, size);
+		}
+
+		//Test to see if this target has been used before
+		new_target = doubleTap(players, whichPlayer, targetLocation);
+		switch (new_target)
+		{
+		case 0: break;
+		case 1: cout << "You have already hit a ship at those coordinates. Try again." << endl;
+			break;
+		case 2: cout << "You have already missed at those coordinates. Try again." << endl;
+			break;
+		default:
+			break;
+		}
+
+		//Check grid to determine hit status
+		if (checkHit(players, whichPlayer, targetLocation))
+		{
+			cout << "HIT!" << endl;
+			writeHit(players, whichPlayer, targetLocation);
+			shotHit = true;
+		}
+		else
+			cout << "Miss!" << endl;
+	} while (shotHit);
 	
-	//Check grid to determine hit status
-	if (checkHit(players, whichPlayer, targetLocation))
-	{
-		cout << "HIT!" << endl;
-		writeHit(players, whichPlayer, targetLocation);
-	}
-	else
-		cout << "Miss!" << endl;
 		
 	
 }
@@ -80,7 +103,17 @@ bool checkHit(Player players[], short whichPlayer, Cell target)
 		return true;
 	else
 		return false;
-
+}
+int doubleTap(Player players[], short whichPlayer, Cell target)
+{
+	//Basically the converse of checkHit()
+	Ship impact = players[whichPlayer].m_gameGrid[OFFENSE_GRID][target.m_row][target.m_col];
+	if (impact == HIT)
+		return 1; //Already attacked: Hit
+	else if (impact == MISSED)
+		return 2; //Already attacked: Missed
+	else
+		return 0; //New target location. Keep going
 }
 void writeMiss(Player players[], short whichPlayer, char size, Cell target)
 {	
@@ -103,12 +136,16 @@ void writeHit(Player players[], short whichPlayer, Cell target)
 	if (--(players[!whichPlayer].m_ships[shipNameToNumber(damagedShip)].m_piecesLeft) <= 0)
 	{
 		//Tell players
+		cout << "Player " << !whichPlayer - 1 << "'s " <<
+			players[!whichPlayer].m_ships[shipNameToNumber(damagedShip)].m_name <<
+			" has been sunk!" << endl;
 	}
 		
 	//Compute the total ship pieces
 	if (--(players[!whichPlayer].m_piecesLeft) <= 0)
 	{
 		//end the game
+		cout << "Player " << !whichPlayer << " has lost!";
 	}	
 
 }

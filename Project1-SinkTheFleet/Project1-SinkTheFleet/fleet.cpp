@@ -76,7 +76,7 @@ void setShipInfo(ShipInfo * shipInfoPtr, Ship name, Direction orientation,
 		{
 			(*shipInfoPtr).m_name = name;
 			(*shipInfoPtr).m_orientation = orientation;
-			(*shipInfoPtr).m_piecesLeft = shipNameToNumber(name);
+			(*shipInfoPtr).m_piecesLeft = shipSize[shipNameToNumber(name)];
 			(*shipInfoPtr).m_bowLocation.m_col = col;
 			(*shipInfoPtr).m_bowLocation.m_row = row;
 		}
@@ -469,6 +469,8 @@ void setShips(Player players[], char size, short whichPlayer)
 				if (validLocation(players[whichPlayer], j))
 				{
 					putShip(players[whichPlayer], j);
+					players[whichPlayer].m_ships[j].m_piecesLeft =
+						shipSize[j];
 					system("cls");
 					printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
 				}
