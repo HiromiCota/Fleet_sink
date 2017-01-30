@@ -215,7 +215,11 @@ void deleteMem(Player players[], char size)
 			//Second: Free the memory used by the grids.
 			delete[] players[i].m_gameGrid[0];
 			delete[] players[i].m_gameGrid[1];
-			delete[] players[i].m_ships;			
+			delete &players[i].m_piecesLeft;
+			for (int j = 0; i < 7; j++)
+			{
+				delete &players[i].m_ships[j];
+			}
 		}
 		delete players;
 	}
@@ -657,13 +661,16 @@ void saveGrid(Player players[], short whichPlayer, char size)
 	const short DEFENSE_GRID = 0;
 	filebuf fb;
 	string fileName = "default.ship";
+	string prompt = "saving "; //To tell the player that we're using their input
+	// to save, not load.
+	
 	//No, don't do this. Change it to be just shipNumber, bowLoc, and orient
 	//Way easier to verify that the data is a valid game state
 
 	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
 	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;	
 	
-	fileName = getFileName(fileName);
+	fileName = getFileName(prompt);
 
 	fb.open(fileName, ios::out);
 	ostream os(&fb);
@@ -701,26 +708,48 @@ void saveGrid(Player players[], short whichPlayer, char size)
 //
 // Called By:	saveGrid()
 //
-// Parameters:	fileName: string - the name of the file
+// Parameters:	process: string - "loading " or "saving " only, please.
 // 
 // Returns:	fileName string
 //
 // History Log:
 //		12/20/05 PB completed v 0.1
 //     1/20/17	HRC Completed v 0.2 (Functional; does not accept input, though)
+//		1/29/17	HRC	Completed v 0.3 (Safe input)
 //---------------------------------------------------------------------------------
-string getFileName(string fileName)
+string getFileName(string process)
 {
-	const string prompt = "Please enter file name, without extension. \n";
-	const string prompt2 = "e.g. MyShip, not MyShip.ship \n";	
+	//Give me a file name, user	
+	string inputName;
+	string fileName = "";
+	string prompt =
+		"Please enter a file name using only letters and numbers: ";
+	bool goodInput = true; //Assume true, or we break immediately.
+	while (fileName == "")
+	{
+		cout << prompt;
+		getline(cin, inputName);
+		if (inputName.length() > FILENAME_MAX)
+			goodInput = false;
 
-	ostringstream outSStream;
-	istringstream intSStream;
-	outSStream << prompt << prompt2;
-	cout << outSStream.str();
-	cin >> fileName;
-	fileName.append(".ship");
-	
+		for (int i = 0; goodInput == true && i < inputName.length(); i++)
+		{
+			if (inputName[i] == '.' || isalnum(inputName[i]) || inputName[i] == '_')
+			{
+				//Accept . because file extensions require it.
+				//Underscores and alphanumeric characters are cool, too
+				fileName += inputName[i];
+			}
+			else
+			{
+				//Everything else gets rejected.
+				goodInput = false;
+				inputName[0] = '\0';
+				fileName = "";
+			}
+		}
+	}
+	cout << "Now " << process << fileName;
 	return fileName;
 }
 
@@ -1240,53 +1269,7 @@ void endBox(short player)
 	boxLine(cout, empty, BOXWIDTH);
 	boxBottom(cout, BOXWIDTH);
 }
-//---------------------------------------------------------------------------------
-// Function:	isSunk()
-// Title:		Is the ship sunk?
-// Description:
-//				Determines if a given ship is sunk
-// Programmer:	Hiromi Cota
-// 
-// Date:		1/20/17
-//
-// Version:		1.0
-// 
-// Environment: Hardware: i3 
-//              Software: OS: Windows 7; 
-//              Compiles under Microsoft Visual C++ 2013
-//
-// Output:		No visual output
-//
-// Calls:		none
-//
-// Called By:	main()
-//
-// Parameters:	player: short; the number of the winner (0 or 1)
-// 
-// Returns:		bool- true if sunk
-//					- false if not
-//
-// History Log: 
-//		1/20/17 - HRC - Completed v1.0 (Probably final)
-//---------------------------------------------------------------------------------
-bool isSunk(Player player, Ship thisShip)
-{
-	if (player.m_ships[thisShip].m_piecesLeft <= 0)
-	{
-		//Kaboom!
-		return true;
-	}
-	else
-		return false;
-}
-Ship inputShipType(istream & sin)
-{
-	//This is where the ship number gets brought in, via safeio
-}
-string fGetName(istream& sin)
-{
-	//Give me a file name, user
-}
+
 ShipInfo fGetShip(string shipInfo)
 {
 	Ship thisShip = NOSHIP;
@@ -1300,4 +1283,71 @@ ShipInfo fGetShip(string shipInfo)
 	//Build a ship
 	setShipInfo(&output, thisShip, orient, thisCell.m_row, thisCell.m_col);
 	return output;
+}
+
+int fGetAllShips(string filename, Player players[], short whichPlayer)
+{
+	char size = '\0';
+	const int TOTAL_SHIPS = 7;
+	char buffer = '\0';
+	unsigned short position = 0;
+	Direction orient = HORIZONTAL;
+	ifstream shipData;
+
+	try
+	{
+		shipData.open(filename);
+
+		if (shipData.is_open())
+		{
+			//Start parsing.
+
+			//First line contains size
+			shipData >> size; //This should only be a character and a \n
+			size = toupper(size);
+
+			if (size != 'L' || size != 'S')
+				return 2;//Bad size header
+			else
+			{
+				for (int i = 1; i < TOTAL_SHIPS + 1; i++)
+				{
+					shipData >> position;
+					players[whichPlayer].m_ships[i].m_bowLocation.m_row = position;
+
+					shipData >> position;
+					players[whichPlayer].m_ships[i].m_bowLocation.m_col = position;
+
+					shipData >> buffer;
+					if (buffer == 'H')
+						players[whichPlayer].m_ships[i].m_orientation = HORIZONTAL;
+					else if (buffer == 'V')
+						players[whichPlayer].m_ships[i].m_orientation = VERTICAL;
+					else
+						return 3; //Bad orientation
+
+					if (inBounds(players[whichPlayer], i, size) == false)
+						return 4; //Bad position
+
+					if (i != 1)
+					{
+						//We must check for collisions
+						if (noCollision(players[whichPlayer], i) == false)
+							return 5; //Ship collision
+					}
+				} //End import ship loop
+				shipData.close();
+			} //End open file
+		}
+		else
+		{
+			return 1; //Cannot open file
+		}
+	}
+	catch (exception ex)
+	{
+
+	}
+
+	return 0; //Nothing broke! 
 }

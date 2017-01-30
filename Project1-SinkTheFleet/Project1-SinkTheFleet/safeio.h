@@ -10,6 +10,8 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <cctype>
+
 using namespace std;
 const unsigned BUFFER_SIZE = 256;
 char safeChoice(string prompt, char choice1 = 'Y', char choice2 = 'N');

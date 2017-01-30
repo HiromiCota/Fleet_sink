@@ -2,9 +2,10 @@
   SinkTheFleet.cpp
   safeio.cpp
   fleet.cpp
-d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\fleet.cpp(218): warning C4154: deletion of an array expression; conversion to pointer supplied
   battle.cpp
-d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\battle.cpp(17): error C3861: 'getCoords': identifier not found
   Generating Code...
-d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\fleet.cpp(1285): error C4716: 'inputShipType': must return a value
-d:\google drive\02 - school\project1-sinkthefleet\project1-sinkthefleet\fleet.cpp(1289): error C4716: 'fGetName': must return a value
+fleet.obj : error LNK2005: "class orientException bad_orient" (?bad_orient@@3VorientException@@A) already defined in battle.obj
+fleet.obj : error LNK2005: "class ptrException bad_player_pointer" (?bad_player_pointer@@3VptrException@@A) already defined in battle.obj
+SinkTheFleet.obj : error LNK2005: "class orientException bad_orient" (?bad_orient@@3VorientException@@A) already defined in battle.obj
+SinkTheFleet.obj : error LNK2005: "class ptrException bad_player_pointer" (?bad_player_pointer@@3VptrException@@A) already defined in battle.obj
+C:\Users\Hiromi\Source\Repos\Fleet_sink\Project1-SinkTheFleet\x64\Debug\Project1-SinkTheFleet.exe : fatal error LNK1169: one or more multiply defined symbols found

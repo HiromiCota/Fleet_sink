@@ -23,10 +23,12 @@
 //
 //Start each player's turn
 void takeTheShot(Player players[], short whichPlayer, char size);
+//Safely read in target coordinates
+Cell inputTarget(char size);
 //Check to see if a ship gets hit
-bool checkHit(Player players[], short whichPlayer, char size);
+bool checkHit(Player players[], short whichPlayer, Cell target);
 //Mark the hit on the grids.
-void writeHit(Player players[], short whichPlayer, char size);
+void writeHit(Player players[], short whichPlayer, Cell target);
 
 #endif // !BATTLE_H
 

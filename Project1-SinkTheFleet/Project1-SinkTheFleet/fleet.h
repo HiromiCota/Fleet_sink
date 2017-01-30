@@ -21,6 +21,7 @@
 #include "textGraphics.h"
 #include "safeio.h"
 #include <exception>
+#include <locale> //C++ isalnum() requires this
 
 using namespace std;
 
