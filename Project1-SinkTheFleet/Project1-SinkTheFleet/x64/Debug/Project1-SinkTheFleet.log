@@ -1,8 +1,3 @@
-﻿  TextGraphics.cpp
-  SinkTheFleet.cpp
-  safeio.cpp
-  fleet.cpp
-  battle.cpp
-  Generating Code...
+﻿  battle.cpp
   Project1-SinkTheFleet.vcxproj -> C:\Users\Hiromi\Source\Repos\Fleet_sink\Project1-SinkTheFleet\x64\Debug\Project1-SinkTheFleet.exe
   Project1-SinkTheFleet.vcxproj -> C:\Users\Hiromi\Source\Repos\Fleet_sink\Project1-SinkTheFleet\x64\Debug\Project1-SinkTheFleet.pdb (Partial PDB)

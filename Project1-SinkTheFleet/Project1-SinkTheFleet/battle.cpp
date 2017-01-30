@@ -22,27 +22,54 @@ void takeTheShot(Player players[], short whichPlayer, char size)
 	
 	//Check grid to determine hit status
 	if (checkHit(players, whichPlayer, targetLocation))
+	{
+		cout << "HIT!" << endl;
 		writeHit(players, whichPlayer, targetLocation);
+	}
+	else
+		cout << "Miss!" << endl;
+		
 	
 }
 Cell inputTarget(char size)
 {
 	//Safely read in target coordinates
 	string rowOptions = (toupper(size) == 'L') ? "(ABCDEFGHIJ)" : "(ABCDEFGH)";
-	string colOptions= (toupper(size) == 'L') ? "(1-23)" : "(1-11)";
+	string colOptions= (toupper(size) == 'L') ? "(1-24)" : "(1-12)";
 	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
 	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
+	char highChar = (toupper(size) == 'L') ? 'J' : 'H';
 
 	string prompt1 = "Please enter a row letter ";
 	string prompt2 = "Please enter a column number ";
 
 	bool goodCol = false;
 	bool goodRow = false;
-	Cell target;
+	Cell target = { 0,0 };
 	char inputChar = '\0';
-	short inputCol = 0;
+	short col = 0;
+	char row = 'A';
 
-	while (goodCol == false)
+
+	cout << "It's your turn to attack. Pick a target: " << endl;
+	do
+	{
+		col = 0;
+		cout << "Row must be a letter from A to " << highChar 
+			<< " and column must be from 1 to "  << numberOfCols << endl;
+		while ((row = toupper(cin.get())) < 'A' || row  > highChar)
+		{
+			cin.ignore(BUFFER_SIZE, '\n');
+			cout << "Row must be a letter from A to " << highChar
+				<< " and column must be from 1 to " << numberOfCols << ": ";
+		}
+		cin >> col;
+		if (!cin)
+			cin.clear();
+		cin.ignore(BUFFER_SIZE, '\n');
+	} while (col < 1 || col > numberOfCols);
+	
+	/*while (goodCol == false)
 	{
 		while (goodRow == false)
 		{
@@ -64,7 +91,9 @@ Cell inputTarget(char size)
 			goodCol = true;
 			target.m_col = inputCol;
 		}
-	}
+	}*/
+	target.m_col = col - 1;
+	target.m_row = static_cast<short>(row - 'A');
 	return target;
 }
 bool checkHit(Player players[], short whichPlayer, Cell target)

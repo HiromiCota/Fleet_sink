@@ -388,7 +388,7 @@ void initializePlayer(Player* playerPtr)
 		cin.ignore(BUFFER_SIZE, '\n');
 		exit(EXIT_FAILURE);
 	}
-	playerPtr->m_piecesLeft = TOTALPIECES; 
+	playerPtr->m_piecesLeft = TOTALPIECES; 	
 }
 
 //---------------------------------------------------------------------------------
@@ -437,6 +437,17 @@ void setShips(Player players[], char size, short whichPlayer)
 	ostringstream outSStream;
 	Cell location = {0, 0};
 	Ship thisShip = NOSHIP;
+	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
+	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
+
+	//Game grids need to be initialized for collision checking to work
+	for (short j = 0; j < numberOfRows; j++)
+	{
+		for (short i = 0; i < numberOfCols; i++)
+		{
+			players[whichPlayer].m_gameGrid[0][j][i] = NOSHIP;
+		}
+	}
 	
 	for(short j = 1; j <= SHIP_SIZE_ARRAYSIZE; j++)
 	{
@@ -533,13 +544,17 @@ void putShip(Player& player, short shipNumber)
 	//		Do not call this function directly without running validators
 	//		inBounds() and validLocation() first.
 	Ship thisShip = shipNumberToName(shipNumber);
+	Cell testLocation = { 0,0 };
 
 	if (player.m_ships[shipNumber].m_orientation == VERTICAL)
 	{
 		//Loop vertically
 		for (int i = 0; i < shipSize[shipNumber]; i++)
 		{
-			player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL) + i][(player, shipNumber, HORIZONTAL)] =
+			testLocation.m_row = player.m_ships[shipNumber].m_bowLocation.m_row + i;
+			testLocation.m_col = player.m_ships[shipNumber].m_bowLocation.m_col;
+
+			player.m_gameGrid[0][testLocation.m_row][testLocation.m_col] =
 				thisShip;
 		}
 	}
@@ -685,7 +700,7 @@ void saveGrid(Player players[], short whichPlayer, char size)
 
 	os << toupper(size) << endl; //size is alone on the first line
 
-	for (int i = 0; i < SHIP_SIZE_ARRAYSIZE; i++)
+	for (int i = 0; i < SHIP_SIZE_ARRAYSIZE -1; i++)
 	{
 		if (players[whichPlayer].m_ships[i].m_orientation == HORIZONTAL)
 			orient = 'H';
@@ -763,7 +778,7 @@ string getFileName(string process)
 			}
 		}
 	}
-	cout << "Now " << process << fileName;
+	cout << "Now " << process << fileName << endl << endl;
 	return fileName;
 }
 
@@ -806,8 +821,7 @@ string getFileName(string process)
 int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 {
 	
-	char size = '\0';
-	const int TOTAL_SHIPS = 7;
+	char size = '\0';	
 	char buffer = '\0';
 	unsigned short position = 0;
 	Direction orient = HORIZONTAL;
@@ -826,15 +840,21 @@ int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 			size = toupper(size);
 
 			if (size != realSize)
+			{
+				shipData.close();
 				return 2;//Bad size header
+			}
+				
 			else
 			{
-				for (int i = 1; i < TOTAL_SHIPS + 1; i++)
+				for (int i = 1; i < SHIP_SIZE_ARRAYSIZE; i++)
 				{
-					shipData >> position;
+					shipData >> buffer;
+					position = toupper(buffer) - 'A'; //Convert to 0-based
 					players[whichPlayer].m_ships[i].m_bowLocation.m_row = position;
 
 					shipData >> position;
+					position -= 1; //Convert to 0-based
 					players[whichPlayer].m_ships[i].m_bowLocation.m_col = position;
 
 					shipData >> buffer;
@@ -843,16 +863,26 @@ int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 					else if (buffer == 'V')
 						players[whichPlayer].m_ships[i].m_orientation = VERTICAL;
 					else
+					{
+						shipData.close();
 						return 3; //Bad orientation
+					}					
 
 					if (inBounds(players[whichPlayer], i, size) == false)
+					{
+						shipData.close();
 						return 4; //Bad position
-
+					}
+				
 					if (i != 1)
 					{
 						//We must check for collisions
 						if (validLocation(players[whichPlayer], i) == false)
+						{
+							shipData.close();
 							return 5; //Ship collision
+						}
+							
 					}
 				} //End import ship loop
 				shipData.close();
@@ -916,8 +946,8 @@ Cell getCoord(istream& sin, char size)
 	do
 	{
 		col = 0;
-		cout << "Row must be a letter from A to " << highChar 
-			<< " and column must be  from 1 to "  << numberOfCols << ": ";
+		//cout << "Row must be a letter from A to " << highChar 
+		//	<< " and column must be  from 1 to "  << numberOfCols << endl;
 		while((row = toupper(sin.get())) < 'A' || row  > highChar)
 		{
 			sin.ignore(BUFFER_SIZE, '\n');
@@ -972,13 +1002,17 @@ bool validLocation(const Player& player, short shipNumber)
 {
 	bool noWreck = true; //Assume true until we break it.
 	Ship thisShip = shipNumberToName(shipNumber);
+	Cell testLocation = { 0,0 };
 
 	if (player.m_ships[shipNumber].m_orientation == VERTICAL)
 	{
 		//Loop vertically
 		for (int i = 0; i < shipSize[shipNumber]; i++)
 		{
-			if (player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL) + i][(player, shipNumber, HORIZONTAL)] !=
+			testLocation.m_row = player.m_ships[shipNumber].m_bowLocation.m_row + i;
+			testLocation.m_col = player.m_ships[shipNumber].m_bowLocation.m_col;
+			
+			if (player.m_gameGrid[0][testLocation.m_row][testLocation.m_col] !=
 				NOSHIP)
 				noWreck = false;
 		}
@@ -987,7 +1021,10 @@ bool validLocation(const Player& player, short shipNumber)
 	{
 		for (int i = 0; i < shipSize[shipNumber]; i++)
 		{
-			if (player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL)][(player, shipNumber, HORIZONTAL + i)] !=
+			testLocation.m_row = player.m_ships[shipNumber].m_bowLocation.m_row;
+			testLocation.m_col = player.m_ships[shipNumber].m_bowLocation.m_col + i;
+
+			if (player.m_gameGrid[0][testLocation.m_row][testLocation.m_col] !=
 				NOSHIP)
 				noWreck = false;
 		}

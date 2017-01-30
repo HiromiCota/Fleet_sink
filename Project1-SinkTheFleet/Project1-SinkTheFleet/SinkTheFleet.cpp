@@ -69,6 +69,8 @@ int main(void)
 	Ship shipHit = NOSHIP;
 	Player game[NUMPLAYERS] ;	//The highlest level of the struct tree
 	char loadFromFile = false;	
+	bool gridComplete = false;
+	int fileReturn = 0;
 
 	do
 	{
@@ -94,27 +96,35 @@ int main(void)
 		
 		for(whichPlayer = 0; whichPlayer < NUMPLAYERS; whichPlayer++)
 		{
-			//Load from file?
-			loadFromFile = safeChoice("Would you like to load your grid from a file?", 'Y', 'N');
-
-			//give me the file name
-			if (toupper(loadFromFile) == 'Y')
+			gridComplete = false;
+			while (gridComplete == false)
 			{
-				filename = getFileName("loading ");
-				errorDecoder(getGrid(game, whichPlayer, gridSize, filename));
-			}
-			else
-			{
-				//Loop through manual ship input
-				setShips(game, gridSize, whichPlayer);
-			}
+				cout << "Player " << whichPlayer + 1 << ": \n";
+				//Load from file?
+				loadFromFile = safeChoice("Would you like to load your grid from a file?", 'Y', 'N');
 
-			
+				//give me the file name
+				if (toupper(loadFromFile) == 'Y')
+				{
+					filename = getFileName("loading ");
+					fileReturn = getGrid(game, whichPlayer, gridSize, filename);
 
+					if (fileReturn == 0) //No error, get out of the loop
+						gridComplete = true;
+					else
+						errorDecoder(fileReturn); //print error. stay in loop
+				}
+				else
+				{
+					//Loop through manual ship input
+					setShips(game, gridSize, whichPlayer);
+				}
+			}
 		}
 		whichPlayer = 0;
 		while(!gameOver)
 		{
+			cout << "Player " << whichPlayer + 1 << ": Get Ready!" << endl;
 			takeTheShot(game, whichPlayer, gridSize);
 		// ... a lot more stuff ...
 
