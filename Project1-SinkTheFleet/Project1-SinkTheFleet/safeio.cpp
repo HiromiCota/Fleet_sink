@@ -56,7 +56,7 @@ char safeChoice(string prompt, char choice1, char choice2)
 		cin.ignore(BUFFER_SIZE, '\n');
 		cout << prompt << outSStream.str();
 	}		
-	if(input == '\n')
+	if(input == '\n' || input == choice1)
 		input = choice1;
 	else
 		cin.ignore(BUFFER_SIZE, '\n');

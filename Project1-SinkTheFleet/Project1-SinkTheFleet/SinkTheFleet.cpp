@@ -67,8 +67,8 @@ int main(void)
 	string message;
 	string filename;
 	Ship shipHit = NOSHIP;
-	Player game[NUMPLAYERS] ;	// the two players in an array
-	// other stuff ...
+	Player game[NUMPLAYERS] ;	//The highlest level of the struct tree
+	char loadFromFile = false;	
 
 	do
 	{
@@ -92,15 +92,24 @@ int main(void)
 		// dynamically create the rows of the array
 		allocMem(game,gridSize);
 		
-		// ... your code goes here
-
 		for(whichPlayer = 0; whichPlayer < NUMPLAYERS; whichPlayer++)
 		{
 			//Load from file?
+			loadFromFile = safeChoice("Would you like to load your grid from a file?", 'Y', 'N');
 
 			//give me the file name
+			if (toupper(loadFromFile) == 'Y')
+			{
+				filename = getFileName("loading ");
+				errorDecoder(getGrid(game, whichPlayer, gridSize, filename));
+			}
+			else
+			{
+				//Loop through manual ship input
+				setShips(game, gridSize, whichPlayer);
+			}
 
-			//Loop through manual ship input
+			
 
 		}
 		whichPlayer = 0;
@@ -122,3 +131,30 @@ int main(void)
 
 	return EXIT_SUCCESS;
 } 
+void errorDecoder(int code)
+{
+	string error = "Error! \n";
+	switch (code)
+	{
+	case 0:
+		break; //All OK.
+	case 1:
+		cout << error << "Could not open file.";
+		break;
+	case 2:
+		cout << error << "File does not match game size.";
+		break;
+	case 3:
+		cout << error << "File has bad orientation data for ships.";
+		break;
+	case 4:
+		cout << error << "Ships are out of bounds for game size.";
+		break;
+	case 5:
+		cout << error << "Illegal positions for ships in file.";
+		break;
+	default:
+		break;
+	}
+	cout << endl;
+}

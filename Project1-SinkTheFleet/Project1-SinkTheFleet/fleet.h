@@ -135,25 +135,22 @@ void deleteMem(Player players[], char size);
 void saveGrid(Player players[], short whichPlayer, char size);
 
 // reads grid from a file	
-bool getGrid(Player players[], short whichPlayer, char size, string fileName);
+int getGrid(Player players[], short whichPlayer, char size, string fileName);
 
 // allows user to put ships in grid
-void setships(Player players[], char size, short whichPlayer);
+void setShips(Player players[], char size, short whichPlayer);
 
 // returns a cell with coordinates set by user
 Cell getCoord(istream& sin, char size);
 
-// can the ship go there?
-bool validLocation(const Player& player, short shipNumber, char size);
+// Does the ship cross another ship?
+bool validLocation(const Player& player, short shipNumber);
 
 // Is the ship on the board?
 bool inBounds(const Player& player, short shipNumber, char size);
 
 // Is the shot target on the board?
 bool inBounds(Cell target, char size);
-
-// Does the ship cross another ship?
-bool noCollision(const Player& player, short shipNumber);
 
 // Where is the bow?
 int getBowLoc(const Player& player, short shipNumber, Direction direction);
@@ -169,6 +166,9 @@ void putShip(Player& player, short shipNumber);
 
 //Prompts user for file name of .ship file.
 string getFileName(string fileName);
+
+//Converts error message from getGrid() to user-readable error
+void errorDecoder(int code);
 	
 // ...
 //----------------------------------------------------------------------------
@@ -183,16 +183,17 @@ void endBox(short player);
 //----------------------------------------------------------------------------
 // Custom exceptions
 //----------------------------------------------------------------------------
-class orientException : public exception
+static class orientException : public exception
 {
-public : //If the public section isn't here, none of this code is accessible
+public : 
+	//If the public section isn't here, none of this code is accessible
 	virtual const char* what() const throw()
 	{
 		return "Somehow the ship is neither horizontal nor vertical.";
 	}
 } bad_orient;
 
-class ptrException : public exception
+static class ptrException : public exception
 {
 public:
 	virtual const char* what() const throw()
