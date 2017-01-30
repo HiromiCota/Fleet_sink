@@ -69,51 +69,27 @@ Cell inputTarget(char size)
 		cin.ignore(BUFFER_SIZE, '\n');
 	} while (col < 1 || col > numberOfCols);
 	
-	/*while (goodCol == false)
-	{
-		while (goodRow == false)
-		{
-			cout << prompt1 << rowOptions;
-			cin.get(inputChar);
-			inputChar = toupper(inputChar);
-
-			if (inputChar <= 'A' && inputChar < 'A' + numberOfRows)
-			{
-				goodRow = true;
-				target.m_row = inputChar - 'A';
-			}
-		}
-		cout << prompt2 << colOptions;
-		cin >> inputCol;
-		
-		if (inputCol >= 0 && inputCol < numberOfCols + 1)
-		{
-			goodCol = true;
-			target.m_col = inputCol;
-		}
-	}*/
 	target.m_col = col - 1;
 	target.m_row = static_cast<short>(row - 'A');
 	return target;
 }
 bool checkHit(Player players[], short whichPlayer, Cell target)
 {
-	if (players[!whichPlayer].m_gameGrid[0][target.m_row][target.m_col] != NOSHIP)
+	whichPlayer = !whichPlayer;
+	if (players[whichPlayer].m_gameGrid[DEFENSE_GRID][target.m_row][target.m_col] != NOSHIP)
 		return true;
 	else
 		return false;
 
 }
 void writeMiss(Player players[], short whichPlayer, char size, Cell target)
-{
-	const short OFFENSE_GRID = 1;
+{	
 	//Write miss to player's [1] grid
 	players[whichPlayer].m_gameGrid[OFFENSE_GRID][target.m_row][target.m_col] = MISSED;
 }
 void writeHit(Player players[], short whichPlayer, Cell target)
 {
-	const short OFFENSE_GRID = 1;
-	const short DEFENSE_GRID = 0;
+	
 	Ship damagedShip;
 	//If checkHit returns true, this writes the hit to 
 	//the current player's [1] grid 

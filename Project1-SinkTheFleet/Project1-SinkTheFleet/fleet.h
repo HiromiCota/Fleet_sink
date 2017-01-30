@@ -33,10 +33,11 @@ const short LARGECOLS = 24;	// number of rows/columns in large sea array
 
 const short BOXWIDTH = 79;	// maximum screen line length
 
-
 const int SHIP_SIZE_ARRAYSIZE = 6; // size of the shipSize array
 const int NUMBER_OF_SHIPS = 5; //Number of ships each player gets
 const short shipSize[SHIP_SIZE_ARRAYSIZE] = {0, 2, 3, 3, 4, 5}; 
+const short OFFENSE_GRID = 1;
+const short DEFENSE_GRID = 0;
 	// number of elements for each ship
 
 //----------------------------------------------------------------------------

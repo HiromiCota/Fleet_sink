@@ -128,7 +128,7 @@ void allocMem(Player players[], char size)
 		for(short i = 0; i < NUMPLAYERS; ++i)  //First: Build pointers for the grids
 		{
 			players[i].m_gameGrid[0] = nullptr; //My ships
-			players[i].m_gameGrid[1] = nullptr; //My attacks
+			players[i].m_gameGrid[1] = nullptr; //My attacks			
 			players[i].m_gameGrid[0] = new Ship*[numberOfRows];
 			players[i].m_gameGrid[1] = new Ship*[numberOfRows];
 
@@ -140,18 +140,14 @@ void allocMem(Player players[], char size)
 				players[i].m_gameGrid[1][j] = nullptr;
 				players[i].m_gameGrid[0][j] = new Ship[numberOfCols];
 				players[i].m_gameGrid[1][j] = new Ship[numberOfCols];
+
+				for (short k = 0; k < numberOfCols; k++) //Third: Fill values into each column in each row
+				{
+					players[i].m_gameGrid[0][j][k] = NOSHIP;
+					players[i].m_gameGrid[1][j][k] = NOSHIP;
+				} // end for k
 			} // end for j
 		} // end for i
-		for (short i = 0; i < numberOfRows; i++)
-		{
-			for (short k = 0; k < numberOfCols; k++) //Third: Fill values into each column in each row
-			{				
-				players[i].m_gameGrid[0][i][k] = NOSHIP;
-				players[i].m_gameGrid[1][i][k] = NOSHIP;
-			} // end for k
-		}
-			
-
 	}
 	catch(bad_alloc e)
 	{
@@ -442,15 +438,6 @@ void setShips(Player players[], char size, short whichPlayer)
 	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
 	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
 
-	//Game grids need to be initialized for collision checking to work
-	for (short j = 0; j < numberOfRows; j++)
-	{
-		for (short i = 0; i < numberOfCols; i++)
-		{
-			players[whichPlayer].m_gameGrid[0][j][i] = NOSHIP;
-		}
-	}
-	
 	for(short j = 1; j <= SHIP_SIZE_ARRAYSIZE; j++)
 	{
 		thisShip = shipNumberToName(j);
@@ -883,9 +870,10 @@ int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 						{
 							shipData.close();
 							return 5; //Ship collision
-						}
-							
+						}						
 					}
+					//If we haven't gotten kicked out yet, write it to grid
+					putShip(players[whichPlayer], i);
 				} //End import ship loop
 				shipData.close();
 			} //End open file

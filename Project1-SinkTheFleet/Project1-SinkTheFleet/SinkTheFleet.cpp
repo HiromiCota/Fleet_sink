@@ -124,7 +124,9 @@ int main(void)
 		whichPlayer = 0;
 		while(!gameOver)
 		{
+			system("cls");
 			cout << "Player " << whichPlayer + 1 << ": Get Ready!" << endl;
+			printGrid(cout, game[whichPlayer].m_gameGrid[0], gridSize);
 			takeTheShot(game, whichPlayer, gridSize);
 		// ... a lot more stuff ...
 
