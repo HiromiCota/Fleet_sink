@@ -97,6 +97,9 @@ struct Player
 	short m_piecesLeft;	// how many sections of fleet are left undestroyed?
 };
 
+static const char* shipNames[SHIP_SIZE_ARRAYSIZE] =
+{ "No Ship", "Mine Sweeper", "Submarine", "Frigate",
+"Battleship", "Aircraft Carrier" };
 //----------------------------------------------------------------------------
 // function prototypes for ship
 //----------------------------------------------------------------------------

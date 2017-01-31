@@ -11,7 +11,7 @@
 #include "battle.h"
 
 using namespace std;
-extern const char* shipNames[7];
+extern const char* shipNames[6];
 //---------------------------------------------------------------------------------
 // Function:	main()
 // Title:		Set ShipInfo
@@ -52,6 +52,8 @@ extern const char* shipNames[7];
 //
 // History Log: 
 //				12/9/2010 PB completed v 0.5
+//				1/20/2017 - 1/30/2017 (many commits that I forgot to document)
+//				1/30/2017 HRC Completed v 1.0 (final)
 //   
 //---------------------------------------------------------------------------------
 int main(void)
@@ -70,6 +72,7 @@ int main(void)
 	Player game[NUMPLAYERS] ;	//The highlest level of the struct tree
 	char loadFromFile = false;	
 	bool gridComplete = false;
+	bool turnOver = false;
 	int fileReturn = 0;
 
 	do
@@ -110,7 +113,10 @@ int main(void)
 					fileReturn = getGrid(game, whichPlayer, gridSize, filename);
 
 					if (fileReturn == 0) //No error, get out of the loop
+					{
 						gridComplete = true;
+						cout << "Load successful!" << endl;
+					}
 					else
 						errorDecoder(fileReturn); //print error. stay in loop
 				}
@@ -125,13 +131,28 @@ int main(void)
 		while(!gameOver)
 		{
 			system("cls");
-			cout << "Player " << whichPlayer + 1 << ": Get Ready!" << endl;
-			printGrid(cout, game[whichPlayer].m_gameGrid[0], gridSize);
-			takeTheShot(game, whichPlayer, gridSize);
-		// ... a lot more stuff ...
-
-
-			whichPlayer = !whichPlayer;  // switch players
+			//This loop only exits when the player misses OR runs out of targets
+			while (!turnOver)
+			{				
+				turnOver = takeTheShot(game, whichPlayer, gridSize);
+			}
+			//Also require that there be valid targets left
+			if (game[!whichPlayer].m_piecesLeft <= 0)
+			{
+				cout << "Victory is yours, Player " << whichPlayer + 1 << "!" << endl;
+				gameOver = true;
+			}
+			else
+			{
+				//Next player
+				whichPlayer = !whichPlayer;  // switch players
+				system("cls");
+				cout << "It is now Player " << whichPlayer + 1 << "'s turn." << endl;
+				cout << "Press enter to take your turn.";
+				cin.get();
+			}
+			
+			turnOver = false;
 		}
 		//Congratulate player for victory
 
@@ -143,6 +164,35 @@ int main(void)
 
 	return EXIT_SUCCESS;
 } 
+//---------------------------------------------------------------------------------
+// Function:	errorDecoder()
+// Title:		Error Decoder
+// Description:
+//				Translates getGrid()'s error codes into a human-readable format
+// Programmer:	Hiromi Cota
+// 
+// Date:		1/21/2017
+//
+// Version:		1.0
+// 
+// Environment: Hardware: i3 
+//              Software: OS: Windows 7; 
+//              Compiles under Microsoft Visual C++ 2013
+//
+// Output:	Error message to cout
+//
+// Calls:	nothing
+//
+// Called By:	main()
+//
+// Parameters:	code; int (values explained in comments below)
+// 
+// Returns:	void
+//
+// History Log: 
+//		1/21/17	HRC completed v 1.0
+//     
+//---------------------------------------------------------------------------------
 void errorDecoder(int code)
 {
 	string error = "Error! \n";

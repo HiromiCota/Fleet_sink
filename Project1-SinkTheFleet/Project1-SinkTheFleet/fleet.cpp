@@ -23,9 +23,7 @@
 //    declared in fleet.h 
 //---------------------------------------------------------------------------------
 
-const char* shipNames[SHIP_SIZE_ARRAYSIZE] = 
-	{"No Ship", "Mine Sweeper", "Submarine", "Frigate",
-		"Battleship", "Aircraft Carrier"};
+
 const int TOTALPIECES = 17; // total pieces in all ships
 
 //---------------------------------------------------------------------------------
@@ -58,6 +56,7 @@ const int TOTALPIECES = 17; // total pieces in all ships
 // History Log:
 //		12/20/05 PB completed v 0.1
 //		1/20/17 HRC Completed v 1.0 (probably final)
+//		1/30/17 HRC Completed v 1.1 (1.0 was NOT final)
 //---------------------------------------------------------------------------------
 void setShipInfo(ShipInfo * shipInfoPtr, Ship name, Direction orientation,
 	unsigned short row, unsigned short col)
@@ -70,7 +69,6 @@ void setShipInfo(ShipInfo * shipInfoPtr, Ship name, Direction orientation,
 			//We have a serious error, because that means that the player's pointer is bad
 			throw bad_player_pointer;
 			//Also, probably just break out of the program, because this is a fatal error.
-
 		}
 		else
 		{
@@ -115,8 +113,8 @@ void setShipInfo(ShipInfo * shipInfoPtr, Ship name, Direction orientation,
 //
 // History Log:
 //		12/20/05 PB completed v 1.0 
-//		9/13/06  PB completed v 1.01
-//
+//		9/13/06  PB completed v 1.01	
+//		1/17/17  HRC completed v 1.1
 //---------------------------------------------------------------------------------
 void allocMem(Player players[], char size)
 {
@@ -147,7 +145,12 @@ void allocMem(Player players[], char size)
 					players[i].m_gameGrid[1][j][k] = NOSHIP;
 				} // end for k
 			} // end for j
+			for (int j = 1; j <= NUMBER_OF_SHIPS; j++)
+			{
+				setShipInfo(&players[i].m_ships[j], shipNumberToName(j), HORIZONTAL, 0, 0);
+			}
 		} // end for i
+
 	}
 	catch(bad_alloc e)
 	{
@@ -185,13 +188,13 @@ void allocMem(Player players[], char size)
 //
 // History Log:
 //		12/20/05 PB completed v 0.1
-//   
+//		1/20/17	HRC completed v 1.0 (Might be done?)
 //---------------------------------------------------------------------------------
 void deleteMem(Player players[], char size) 
 {	
 	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
 	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
-	// your code goes here ...
+	
 	// delete[] in reverse order of allocMem()
 	// be sure to check if the memory was allocated (!nullptr) BEFORE deleting
 	try
@@ -216,7 +219,7 @@ void deleteMem(Player players[], char size)
 				delete &players[i].m_ships[j];
 			}
 		}
-		delete players;
+		delete players; //That's everything, right?
 	}
 	catch (exception ex)
 	{
@@ -226,7 +229,6 @@ void deleteMem(Player players[], char size)
 		cin.ignore(BUFFER_SIZE, '\n');
 		exit(EXIT_FAILURE);
 	}
-
 }
 
 //---------------------------------------------------------------------------------
@@ -425,7 +427,7 @@ void initializePlayer(Player* playerPtr)
 // History Log: 
 //		9/12/06 PB comleted v 0.5
 //		1/18/17 HRC completed v 0.6 (Fully functional)
-//     
+//		1/21/17 HRC completed v 1.0 Could be final?
 //---------------------------------------------------------------------------------
 void setShips(Player players[], char size, short whichPlayer)
 {
@@ -671,6 +673,7 @@ short shipNameToNumber(Ship name)
 // History Log:
 //		12/20/05 PB completed v 0.1
 //     1/20/17	HRC Completed v 0.2 (will save the grid to default location)
+//		1/29/17	HRC Completed v 0.3 (New file format)
 //---------------------------------------------------------------------------------
 void saveGrid(Player players[], short whichPlayer, char size)
 {
@@ -681,8 +684,10 @@ void saveGrid(Player players[], short whichPlayer, char size)
 	// to save, not load.
 	char orient = 'H';
 	
-	//No, don't do this. Change it to be just shipNumber, bowLoc, and orient
-	//Way easier to verify that the data is a valid game state
+	//File format is:
+	//Size on first line
+	//row col direction
+	//No need for ship numbers; assume they're in order
 	
 	fileName = getFileName(prompt);
 
@@ -691,7 +696,7 @@ void saveGrid(Player players[], short whichPlayer, char size)
 
 	os << toupper(size) << endl; //size is alone on the first line
 
-	for (int i = 0; i < SHIP_SIZE_ARRAYSIZE -1; i++)
+	for (int i = 0; i < NUMBER_OF_SHIPS; i++)
 	{
 		if (players[whichPlayer].m_ships[i].m_orientation == HORIZONTAL)
 			orient = 'H';
@@ -769,7 +774,7 @@ string getFileName(string process)
 			}
 		}
 	}
-	cout << "Now " << process << fileName << endl << endl;
+	cout << "Now " << process << fileName << endl;
 	return fileName;
 }
 
@@ -807,7 +812,7 @@ string getFileName(string process)
 //
 // History Log: 
 //		9/12/06 PB comleted v 0.5
-//     
+//     1/28/17	HRC Completed v 1.0 (more granular output)
 //---------------------------------------------------------------------------------
 int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 {
@@ -925,7 +930,7 @@ int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 //
 // History Log: 
 //		9/12/06 PB comleted v 1.0
-//     
+//     1/18/17	HRC Completed v 1.01 (fixed minor bug)
 //---------------------------------------------------------------------------------
 Cell getCoord(istream& sin, char size)
 {
@@ -938,8 +943,7 @@ Cell getCoord(istream& sin, char size)
 	do
 	{
 		col = 0;
-		//cout << "Row must be a letter from A to " << highChar 
-		//	<< " and column must be  from 1 to "  << numberOfCols << endl;
+
 		while((row = toupper(sin.get())) < 'A' || row  > highChar)
 		{
 			sin.ignore(BUFFER_SIZE, '\n');
@@ -1055,6 +1059,7 @@ bool validLocation(const Player& player, short shipNumber)
 // History Log:
 //		1/13/2017 HRC completed v 0.1
 //	    1/17/2017 HRC completed v 0.2 (optimized loops out of existence & added bad_orient)
+//		1/24/17	HRC completed v 0.3 (bug fix)
 //---------------------------------------------------------------------------------
 bool inBounds(const Player& player, short shipNumber, char size)
 {
@@ -1096,8 +1101,7 @@ bool inBounds(const Player& player, short shipNumber, char size)
 			//m_orientation not set
 			throw bad_orient;
 			//How the hell did you do that?!
-		}
-	
+		}	
 	}
 	catch (const orientException& ex)
 	{
@@ -1105,7 +1109,6 @@ bool inBounds(const Player& player, short shipNumber, char size)
 		//This should never actually happen.
 		//I just wanted practice building custom exception classes.
 	}
-
 	return onBoard;
 }
 //---------------------------------------------------------------------------------
@@ -1226,7 +1229,7 @@ int getBowLoc(const Player& player, short shipNumber, Direction direction)
 //
 // History Log: 
 //		9/12/06 PB comleted v 1.0
-//     
+//     1/31/17	HRC completed v 1.01 (Added name)
 //---------------------------------------------------------------------------------
 void header(ostream& sout)
 {

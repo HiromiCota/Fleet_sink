@@ -20,17 +20,20 @@
 //This could probably all go into the fleet.h and fleet.cpp files, 
 //but they were getting long, and dividing up code into chunks is cleaner
 
+
 //
 //Start each player's turn
-void takeTheShot(Player players[], short whichPlayer, char size);
+bool takeTheShot(Player players[], short whichPlayer, char size);
 //Safely read in target coordinates
 Cell inputTarget(char size);
 //Check if the player has already used those coordinates
-int doubleTap(Player players[], short whichPlayer, Cell target);
+bool doubleTap(Player players[], short whichPlayer, Cell target);
 //Check to see if a ship gets hit
 bool checkHit(Player players[], short whichPlayer, Cell target);
 //Mark the hit on the grids.
 void writeHit(Player players[], short whichPlayer, Cell target);
+//Mark the miss on the grids.
+void writeMiss(Player players[], short whichPlayer, Cell target);
 
 #endif // !BATTLE_H
 

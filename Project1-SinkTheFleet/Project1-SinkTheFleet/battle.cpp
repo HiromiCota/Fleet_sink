@@ -7,95 +7,122 @@
 //
 //----------------------------------------------------------------------------
 #include "battle.h"
-void takeTheShot(Player players[], short whichPlayer, char size)
+
+//---------------------------------------------------------------------------------
+// Function:	takeTheShot()
+// Title:		Take the Shot!
+// Description:
+//				Handles cannon firing from input to sinking ships
+// Programmer:	Hiromi Cota
+// 
+// Date:		1/30/2017
+//
+// Version:		1.0
+//
+// Input: Accepts characters to cin to unpause
+//
+// Output:	Status updates to cout
+//
+// Calls:	getCoord()
+//			printGrid()
+//			checkHit()
+//			writeHit()
+//			writeMiss()
+//
+// Called By:	main()
+//
+// Parameters:	players[]: player; where the game is
+//				whichPlayer: short; the number of the winner (0 or 1)
+//				size: char; size of game board
+// 
+// Returns:	bool - true if the current player's turn should end
+//
+// History Log: 
+//		1/20/17	HRC Completed v 0.1
+//		1/22/17 HRC Completed v 0.2 (rewrote function)
+//		1/28/17 HRC Completed v 0.3 (now pauses correctly)
+//---------------------------------------------------------------------------------
+bool takeTheShot(Player players[], short whichPlayer, char size)
 {
 	Cell targetLocation = { 0, 0 };
 	bool good_target = false;
-	int new_target = 12;
-	bool shotHit = false;
-	//Prompt the player for where they want to shoot.
-	do
+	bool new_target = false;
+	bool endOfTurn = false;
+	
+	//Forces player to pick a target inside the grid && 
+	//one that hasn't been shot at before.
+	while (!good_target || !new_target)
 	{
-		shotHit = false;
 		good_target = false;
-		new_target = 12;
-		while (!good_target)
-		{
-			targetLocation = inputTarget(size);
+		new_target = false;
 
-			//This line requires an overloaded inBounds()
-			good_target = inBounds(targetLocation, size);
-		}
+		system("cls");
+		cout << "Player " << whichPlayer + 1 << ": It's your turn!" << endl;
+		printGrid(cout, players[whichPlayer].m_gameGrid[OFFENSE_GRID], size);
 
+		//Get input	
+		targetLocation = getCoord(cin, size);
+
+		//This line requires an overloaded inBounds()
+		//Check to see if it's in bounds
+		good_target = inBounds(targetLocation, size);
+	
 		//Test to see if this target has been used before
 		new_target = doubleTap(players, whichPlayer, targetLocation);
-		switch (new_target)
-		{
-		case 0: break;
-		case 1: cout << "You have already hit a ship at those coordinates. Try again." << endl;
-			break;
-		case 2: cout << "You have already missed at those coordinates. Try again." << endl;
-			break;
-		default:
-			break;
-		}
-
-		//Check grid to determine hit status
-		if (checkHit(players, whichPlayer, targetLocation))
-		{
-			cout << "HIT!" << endl;
-			writeHit(players, whichPlayer, targetLocation);
-			shotHit = true;
-		}
-		else
-			cout << "Miss!" << endl;
-	} while (shotHit);
+	}	
 	
-		
-	
-}
-Cell inputTarget(char size)
-{
-	//Safely read in target coordinates
-	string rowOptions = (toupper(size) == 'L') ? "(ABCDEFGHIJ)" : "(ABCDEFGH)";
-	string colOptions= (toupper(size) == 'L') ? "(1-24)" : "(1-12)";
-	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
-	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
-	char highChar = (toupper(size) == 'L') ? 'J' : 'H';
-
-	string prompt1 = "Please enter a row letter ";
-	string prompt2 = "Please enter a column number ";
-
-	bool goodCol = false;
-	bool goodRow = false;
-	Cell target = { 0,0 };
-	char inputChar = '\0';
-	short col = 0;
-	char row = 'A';
-
-
-	cout << "It's your turn to attack. Pick a target: " << endl;
-	do
+	//Check grid to determine hit status
+	if (checkHit(players, whichPlayer, targetLocation))
 	{
-		col = 0;
-		cout << "Row must be a letter from A to " << highChar 
-			<< " and column must be from 1 to "  << numberOfCols << endl;
-		while ((row = toupper(cin.get())) < 'A' || row  > highChar)
-		{
-			cin.ignore(BUFFER_SIZE, '\n');
-			cout << "Row must be a letter from A to " << highChar
-				<< " and column must be from 1 to " << numberOfCols << ": ";
-		}
-		cin >> col;
-		if (!cin)
-			cin.clear();
-		cin.ignore(BUFFER_SIZE, '\n');
-	} while (col < 1 || col > numberOfCols);
+		//Hit. Tell the player		
+		writeHit(players, whichPlayer, targetLocation);
+		cout << "HIT!" << endl;
+		cout << "Press enter to to take another turn." << endl;
+		cin.get();
+	}
+	else
+	{
+		writeMiss(players, whichPlayer, targetLocation);
+		cout << "Miss!" << endl;
+		cout << "Press enter to complete your turn." << endl;
+		cin.get();
+		endOfTurn = true;
+	}
+
+	//Also require that there be valid targets left
+	if (players[!whichPlayer].m_piecesLeft <= 0)
+		endOfTurn = true;
 	
-	target.m_col = col - 1;
-	target.m_row = static_cast<short>(row - 'A');
-	return target;
+	return endOfTurn;
 }
+
+//---------------------------------------------------------------------------------
+// Function:	checkHit()
+// Title:		Check Hit
+// Description:
+//		checks to see if the shot hit a ship
+// Programmer:	Hiromi Cota
+// 
+// Date:	1/17/17
+//
+// Version:	1.0
+// 
+// Output:	nothing to screen
+//
+// Calls:	nothing
+//
+// Called By:	takeTheShot()
+//
+// Parameters:	players[]: Player; the game
+//				whichPlayer: short; the number of the player (0 or 1)
+//				target: Cell; where the shot is going
+// 
+// Returns:	bool - true if hit, false if miss
+//
+// History Log: 
+//		1/17/2017 - HRC Completed v 1.0
+//     
+//---------------------------------------------------------------------------------
 bool checkHit(Player players[], short whichPlayer, Cell target)
 {
 	whichPlayer = !whichPlayer;
@@ -104,22 +131,108 @@ bool checkHit(Player players[], short whichPlayer, Cell target)
 	else
 		return false;
 }
-int doubleTap(Player players[], short whichPlayer, Cell target)
+//---------------------------------------------------------------------------------
+// Function:	doubleTap()
+// Title:		Double Tap?
+// Description:
+//		Is this a double tap? 
+//		Checks to see if these coordinates have been used already
+// Programmer:	Hiromi Cota
+// 
+// Date:	1/28/17
+//
+// Version:	1.0
+// 
+// Output:	Mocks players for reusing coordinates
+//
+// Calls:	nothing
+//
+// Called By:	takeTheShot()
+//
+// Parameters:	players[]: Player; the game
+//				whichPlayer: short; the number of the player (0 or 1)
+//				target: Cell; where the shot is going)
+// 
+// Returns:	bool - false if already used, true if a good location
+//
+// History Log: 
+//		1/28/17	- HRC Completed v 1.0
+//     
+//---------------------------------------------------------------------------------
+bool doubleTap(Player players[], short whichPlayer, Cell target)
 {
 	//Basically the converse of checkHit()
 	Ship impact = players[whichPlayer].m_gameGrid[OFFENSE_GRID][target.m_row][target.m_col];
 	if (impact == HIT)
-		return 1; //Already attacked: Hit
+	{
+		cout << "You have already hit a ship at those coordinates. Try again." << endl;
+		return false;
+	}
 	else if (impact == MISSED)
-		return 2; //Already attacked: Missed
+	{
+		cout << "You have already missed at those coordinates. Try again." << endl;
+		return false;
+	}
 	else
-		return 0; //New target location. Keep going
+		return true; //New target location. Keep going
 }
-void writeMiss(Player players[], short whichPlayer, char size, Cell target)
+//---------------------------------------------------------------------------------
+// Function:	writeMiss()
+// Title:		Write Miss
+// Description:
+//		Writes miss data to current player's Offense grid
+// Programmer:	Hiromi
+// 
+// Date:	1/17/17
+//
+// Version:	1.0
+//
+// Output:	nothing to screen
+//
+// Calls:	nothing
+//
+// Called By:	takeTheShot()
+//
+// Parameters:	players[]: Player; the game
+//				whichPlayer: short; the number of the player (0 or 1)
+//				target: Cell; where the shot is going
+// 
+// Returns:	void
+//
+// History Log: 
+//				1/17/17	HRC Completed v 1.0     
+//---------------------------------------------------------------------------------
+void writeMiss(Player players[], short whichPlayer, Cell target)
 {	
 	//Write miss to player's [1] grid
 	players[whichPlayer].m_gameGrid[OFFENSE_GRID][target.m_row][target.m_col] = MISSED;
 }
+//---------------------------------------------------------------------------------
+// Function:	writeHit()
+// Title:		Write Hit
+// Description:
+//		Writes hit data to current player's Offense grid
+// Programmer:	Hiromi
+// 
+// Date:	1/17/17
+//
+// Version:	1.0
+//
+// Output:	Tells players if something got sunk or if someone lost
+//
+// Calls:	nothing
+//
+// Called By:	takeTheShot()
+//
+// Parameters:	players[]: Player; the game
+//				whichPlayer: short; the number of the player (0 or 1)
+//				target: Cell; where the shot is going
+// 
+// Returns:	void
+//
+// History Log: 
+//				1/17/17	HRC Completed v 1.0     
+//---------------------------------------------------------------------------------
 void writeHit(Player players[], short whichPlayer, Cell target)
 {
 	
@@ -136,8 +249,8 @@ void writeHit(Player players[], short whichPlayer, Cell target)
 	if (--(players[!whichPlayer].m_ships[shipNameToNumber(damagedShip)].m_piecesLeft) <= 0)
 	{
 		//Tell players
-		cout << "Player " << !whichPlayer - 1 << "'s " <<
-			players[!whichPlayer].m_ships[shipNameToNumber(damagedShip)].m_name <<
+		cout << "Player " << !whichPlayer + 1 << "'s " <<
+			shipNames[shipNameToNumber(damagedShip)] <<
 			" has been sunk!" << endl;
 	}
 		
@@ -145,7 +258,7 @@ void writeHit(Player players[], short whichPlayer, Cell target)
 	if (--(players[!whichPlayer].m_piecesLeft) <= 0)
 	{
 		//end the game
-		cout << "Player " << !whichPlayer << " has lost!";
+		cout << "Player " << !whichPlayer + 1 << " has lost!";
 	}	
 
 }
