@@ -1079,7 +1079,7 @@ bool inBounds(const Player& player, short shipNumber, char size)
 				(player.m_ships[shipNumber].m_bowLocation.m_row < 0)
 				//The bow location is out of bounds.
 				||
-				(player.m_ships[shipNumber].m_bowLocation.m_row + shipSize[shipNumber] -1 >= numberOfRows)
+				(player.m_ships[shipNumber].m_bowLocation.m_col + shipSize[shipNumber] -1 >= numberOfRows)
 				//The stern location is out of bounds.
 				//Note: -1 is required because shipSize starts at 1, not 0.
 				//Note 2: No need to check if the stern is below 0, because we already checked the bow.
@@ -1092,7 +1092,7 @@ bool inBounds(const Player& player, short shipNumber, char size)
 				(player.m_ships[shipNumber].m_bowLocation.m_col < 0)
 				//The bow location is out of bounds.
 				||
-				(player.m_ships[shipNumber].m_bowLocation.m_col + shipSize[shipNumber] -1  >= numberOfCols))
+				(player.m_ships[shipNumber].m_bowLocation.m_row + shipSize[shipNumber] -1  >= numberOfCols))
 				//The stern location is out of bounds.
 				onBoard = false;		
 		}
