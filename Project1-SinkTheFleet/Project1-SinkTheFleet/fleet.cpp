@@ -438,63 +438,68 @@ void setShips(Player players[], char size, short whichPlayer)
 	Cell location = {0, 0};
 	Ship thisShip = NOSHIP;
 	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
-	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
+	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;	
 
-	for(short j = 1; j <= SHIP_SIZE_ARRAYSIZE; j++)
+	do
 	{
-		thisShip = shipNumberToName(j);
-		system("cls"); //Windows specific command. This must change if we want to support other OSes.
-		printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
-		outSStream.str("");
-		outSStream << "Player " << whichPlayer + 1 << " Enter "
-			<< shipNames[j] << " orientation";
-		input = safeChoice(outSStream.str(), 'V', 'H');
-		players[whichPlayer].m_ships[j].m_orientation
-			= (input == 'V') ? VERTICAL : HORIZONTAL;
-		cout << "Player " << whichPlayer + 1 << " Enter " << shipNames[j] <<
-			" bow coordinates <row letter><col #>: ";
-		players[whichPlayer].m_ships[j].m_bowLocation = getCoord(cin, size);
-
-		if (inBounds(players[whichPlayer], j, size))
+		for (short j = 1; j <= SHIP_SIZE_ARRAYSIZE; j++)
 		{
-			//It's in the grid, at least.
-			if (j == 1)
+			thisShip = shipNumberToName(j);
+			system("cls"); //Windows specific command. This must change if we want to support other OSes.
+			printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
+			outSStream.str("");
+			outSStream << "Player " << whichPlayer + 1 << " Enter "
+				<< shipNames[j] << " orientation";
+			input = safeChoice(outSStream.str(), 'V', 'H');
+			players[whichPlayer].m_ships[j].m_orientation
+				= (input == 'V') ? VERTICAL : HORIZONTAL;
+			cout << "Player " << whichPlayer + 1 << " Enter " << shipNames[j] <<
+				" bow coordinates <row letter><col #>: ";
+			players[whichPlayer].m_ships[j].m_bowLocation = getCoord(cin, size);
+
+			if (inBounds(players[whichPlayer], j, size))
 			{
-				//No collision possible. Just draw it.
-				putShip(players[whichPlayer], j);
-				system("cls");
-				printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
-			}
-			else
-			{
-				//Collision possible. Test it
-				if (validLocation(players[whichPlayer], j))
+				//It's in the grid, at least.
+				if (j == 1)
 				{
+					//No collision possible. Just draw it.
 					putShip(players[whichPlayer], j);
-					players[whichPlayer].m_ships[j].m_piecesLeft =
-						shipSize[j];
 					system("cls");
 					printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
 				}
 				else
 				{
-					//Collision! Yell at the user!
-					cout << "Ship is on top of another ship. Press <enter> to retry";
-					cin.get();
-					j--; // redo
-					continue;
+					//Collision possible. Test it
+					if (validLocation(players[whichPlayer], j))
+					{
+						putShip(players[whichPlayer], j);
+						players[whichPlayer].m_ships[j].m_piecesLeft =
+							shipSize[j];
+						system("cls");
+						printGrid(cout, players[whichPlayer].m_gameGrid[0], size);
+					}
+					else
+					{
+						//Collision! Yell at the user!
+						cout << "Ship is on top of another ship. Press <enter> to retry";
+						cin.get();
+						j--; // redo
+						continue;
+					}
 				}
+			}//End coliision testing
+			else
+			{
+				//Out of bounds. Yell loudly.
+				cout << "Ship is outside the grid. Press <enter> to retry";
+				cin.get();
+				j--; // redo
+				continue;
 			}
-		}
-		else
-		{
-			//Out of bounds. Yell loudly.
-			cout << "Ship is outside the grid. Press <enter> to retry";
-			cin.get();
-			j--; // redo
-			continue;
-		}
-	} // end ship placing block
+		} // end ship placing block
+		input = safeChoice("Are your ships placed correctly?", 'Y', 'N');		
+	} while (toupper(input != ok));
+
 	save = safeChoice("\nSave starting grid?", 'Y', 'N');
 	if(save == 'Y')
 		saveGrid(players, whichPlayer, size);
@@ -555,7 +560,7 @@ void putShip(Player& player, short shipNumber)
 	{
 		for (int i = 0; i < shipSize[shipNumber]; i++)
 		{
-			player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL)][(player, shipNumber, HORIZONTAL + i)] =
+			player.m_gameGrid[0][getBowLoc(player, shipNumber, VERTICAL)][getBowLoc(player, shipNumber, HORIZONTAL)+i] =
 				thisShip;
 		}
 	}
@@ -703,7 +708,7 @@ void saveGrid(Player players[], short whichPlayer, char size)
 		else
 			orient = 'V';
 
-		os << players[whichPlayer].m_ships[i].m_bowLocation.m_row << ' '
+		os << players[whichPlayer].m_ships[i].m_bowLocation.m_row + 'A' << ' '
 			<< players[whichPlayer].m_ships[i].m_bowLocation.m_col << ' '
 			<< orient;
 		os << endl;
@@ -823,6 +828,8 @@ int getGrid(Player players[], short whichPlayer, char realSize, string fileName)
 	Direction orient = HORIZONTAL;
 	ifstream shipData;	
 
+	//If a file does not successfully load, 
+	clearGrid(players, whichPlayer, realSize);
 	try
 	{
 		shipData.open(fileName);
@@ -943,6 +950,9 @@ Cell getCoord(istream& sin, char size)
 	do
 	{
 		col = 0;
+		cout << "Please enter a square to attack." << endl;
+		cout << "Row must be a letter from A to " << highChar
+			<< " and column must be  from 1 to " << numberOfCols << ": ";
 
 		while((row = toupper(sin.get())) < 'A' || row  > highChar)
 		{
@@ -1079,9 +1089,8 @@ bool inBounds(const Player& player, short shipNumber, char size)
 				(player.m_ships[shipNumber].m_bowLocation.m_row < 0)
 				//The bow location is out of bounds.
 				||
-				(player.m_ships[shipNumber].m_bowLocation.m_col + shipSize[shipNumber] -1 >= numberOfRows)
-				//The stern location is out of bounds.
-				//Note: -1 is required because shipSize starts at 1, not 0.
+				(player.m_ships[shipNumber].m_bowLocation.m_col + shipSize[shipNumber] > numberOfCols)
+				//The stern location is out of bounds.				
 				//Note 2: No need to check if the stern is below 0, because we already checked the bow.
 				)
 				onBoard = false;				
@@ -1092,7 +1101,7 @@ bool inBounds(const Player& player, short shipNumber, char size)
 				(player.m_ships[shipNumber].m_bowLocation.m_col < 0)
 				//The bow location is out of bounds.
 				||
-				(player.m_ships[shipNumber].m_bowLocation.m_row + shipSize[shipNumber] -1  >= numberOfCols))
+				(player.m_ships[shipNumber].m_bowLocation.m_row + shipSize[shipNumber] > numberOfRows))
 				//The stern location is out of bounds.
 				onBoard = false;		
 		}
@@ -1289,3 +1298,45 @@ void endBox(short player)
 	boxBottom(cout, BOXWIDTH);
 }
 
+//---------------------------------------------------------------------------------
+// Function:	clearGrid()
+// Title:		Clear Grid
+// Description:
+//				Erases the selected player's grid (defaults to DEFENSE grid)
+// Programmer:	Hiromi Cota
+// 
+// Date:		9/12/06
+//
+// Version:	1.0
+// 
+// Environment: Hardware: i3 
+//              Software: OS: Windows 7; 
+//              Compiles under Microsoft Visual C++ 2013
+//
+// Output:	none
+//
+// Calls:	nothing
+//
+// Called By:	main()
+//
+// Parameters:	players[]: Player; the game
+//				whichPlayer: short; current player
+//				size: char;			board size
+//				whichGrid: int;	Which grid should be erased
+// 
+// Returns:	void
+//
+// History Log: 
+//				2/12/2017 HRC completed v1.0
+//     
+//---------------------------------------------------------------------------------
+void clearGrid(Player players[], short whichPlayer, char size, int whichGrid)
+{
+	short numberOfRows = (toupper(size) == 'L') ? LARGEROWS : SMALLROWS;
+	short numberOfCols = (toupper(size) == 'L') ? LARGECOLS : SMALLCOLS;
+
+	for (int i = 0; i < numberOfRows; i++)
+		for (int j = 0; j < numberOfCols; j++)
+			players[whichPlayer].m_gameGrid[whichGrid][i][j] = NOSHIP;
+		
+}

@@ -69,11 +69,12 @@ int main(void)
 	string message;
 	string filename;
 	Ship shipHit = NOSHIP;
-	Player game[NUMPLAYERS] ;	//The highlest level of the struct tree
+	Player game[NUMPLAYERS] ;	//The highest level of the struct tree
 	char loadFromFile = false;	
 	bool gridComplete = false;
 	bool turnOver = false;
 	int fileReturn = 0;
+	char goodGridInput = '\0';
 
 	do
 	{
@@ -98,7 +99,7 @@ int main(void)
 		allocMem(game,gridSize);
 		
 		for(whichPlayer = 0; whichPlayer < NUMPLAYERS; whichPlayer++)
-		{
+		{			
 			gridComplete = false;
 			while (gridComplete == false)
 			{
@@ -114,17 +115,27 @@ int main(void)
 
 					if (fileReturn == 0) //No error, get out of the loop
 					{
-						gridComplete = true;
 						cout << "Load successful!" << endl;
+
+						//Show them the grid and get confirmation
+						printGrid(cout, game[whichPlayer].m_gameGrid[0], gridSize);
+						goodGridInput = safeChoice("Are your ships placed correctly?", 'Y', 'N');
+						gridComplete = (toupper((goodGridInput == 'N')) ? false : true);						
 					}
 					else
 						errorDecoder(fileReturn); //print error. stay in loop
-				}
+				}//End file load
 				else
 				{
 					//Loop through manual ship input
 					setShips(game, gridSize, whichPlayer);
 				}
+			}//End building the grid			
+			if (whichPlayer == 0) //Wipe the grid so Player 2 can't see Player 1's ships.
+			{
+				system("cls");
+				cout << endl;
+				header(cout);
 			}
 		}
 		whichPlayer = 0;

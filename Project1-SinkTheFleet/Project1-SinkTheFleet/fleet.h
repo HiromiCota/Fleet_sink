@@ -175,6 +175,9 @@ string getFileName(string fileName);
 //Converts error message from getGrid() to user-readable error
 void errorDecoder(int code);
 
+//Resets the current grid back to all NOSHIPs
+void clearGrid(Player players[], short whichPlayer, char realSize, int whichGrid = 0 );
+
 //----------------------------------------------------------------------------
 // other function prototypes
 //----------------------------------------------------------------------------

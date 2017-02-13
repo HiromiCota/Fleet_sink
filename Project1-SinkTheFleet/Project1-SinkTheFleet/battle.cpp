@@ -77,8 +77,20 @@ bool takeTheShot(Player players[], short whichPlayer, char size)
 		//Hit. Tell the player		
 		writeHit(players, whichPlayer, targetLocation);
 		cout << "HIT!" << endl;
-		cout << "Press enter to to take another turn." << endl;
-		cin.get();
+		
+		//Compute the total ship pieces
+		if (--(players[!whichPlayer].m_piecesLeft) <= 0)
+		{
+			//end the game
+			cout << "Player " << !whichPlayer + 1 << " has lost!" << endl;
+			void endBox(short whichPlayer);
+		}
+		else
+		{
+			cout << "Press enter to to take another turn." << endl;
+			cin.get();
+		}
+
 	}
 	else
 	{
@@ -253,12 +265,4 @@ void writeHit(Player players[], short whichPlayer, Cell target)
 			shipNames[shipNameToNumber(damagedShip)] <<
 			" has been sunk!" << endl;
 	}
-		
-	//Compute the total ship pieces
-	if (--(players[!whichPlayer].m_piecesLeft) <= 0)
-	{
-		//end the game
-		cout << "Player " << !whichPlayer + 1 << " has lost!";
-	}	
-
 }
